@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GridOS Real-Time Dashboard</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.6.0/axios.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0c0a09 0%, #1a1a1a 100%);
+            color: #f8fafc;
+        }
+        header {
+            background: rgba(0, 0, 0, 0.8);
+            border-bottom: 2px solid #208080;
+            padding: 1.5rem 2rem;
+        }
+        header h1 { color: #32b8c6; }
+        .container { display: grid; grid-template-columns: 280px 1fr; height: calc(100vh - 80px); }
+        aside {
+            background: rgba(31, 33, 33, 0.95);
+            padding: 1.5rem;
+        }
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            background: rgba(50, 184, 198, 0.1);
+            border: 1px solid #32b8c6;
+            color: #32b8c6;
+            cursor: pointer;
+        }
+        main { padding: 2rem; overflow-y: auto; }
+        #chart { width: 100%; height: 500px; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>GridOS Real-Time Dashboard</h1>
+        <p>Connected to PEGASE 9241 Grid</p>
+    </header>
+    <div class="container">
+        <aside>
+            <button class="btn" onclick="fetchData()">Refresh Data</button>
+            <button class="btn" onclick="runAnalysis()">Run GNN Analysis</button>
+        </aside>
+        <main>
+            <div id="chart"></div>
+            <div id="status">Connecting to backend...</div>
+        </main>
+    </div>
+    <script>
+        const API_URL = 'http://localhost:8000';
+        
+        async function fetchData() {
+            try {
+                const response = await axios.get(`${API_URL}/api/grid-data`);
+                document.getElementById('status').textContent = 'Data loaded successfully';
+                plotData(response.data);
+            } catch (error) {
+                document.getElementById('status').textContent = 'Error: ' + error.message;
+            }
+        }
+        
+        function plotData(data) {
+            const trace = {
+                x: data.x || [1, 2, 3, 4, 5],
+                y: data.y || [10, 15, 13, 17, 20],
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'Grid Power Flow'
+            };
+            Plotly.newPlot('chart', [trace], { title: 'Real-Time Grid Analysis' });
+        }
+        
+        async function runAnalysis() {
+            document.getElementById('status').textContent = 'Running GNN analysis...';
+            try {
+                const response = await axios.post(`${API_URL}/api/analyze`);
+                document.getElementById('status').textContent = 'Analysis complete: ' + JSON.stringify(response.data);
+            } catch (error) {
+                document.getElementById('status').textContent = 'Error: ' + error.message;
+            }
+        }
+        
+        // Auto-fetch on load
+        fetchData();
+    </script>
+</body>
+</html>
